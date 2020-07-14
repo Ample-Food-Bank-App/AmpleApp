@@ -13,8 +13,7 @@ const HomeScreen = props => {
         setEnteredValue(inputText);
     };
 
-    const useMyLocationHandler = () => {
-        const myLocation = '00000';
+    const useMyLocationHandler = (myLocation) => {
         setEnteredValue(myLocation);
         setSelectedValue(myLocation);
     };
@@ -47,6 +46,17 @@ const HomeScreen = props => {
         setSelectedValue(enteredValue);
         props.onStart(selectedValue, selectedOption);
     };
+    
+   getLocation = async () =>  {
+      let { status } = await Location.requestPermissionsAsync();
+      if (status !== 'granted') {
+          Alert.alert('We need your location to show you the nearest food banks!', 'Enter your zipcode instead.', [{ text: 'Okay', style: 'cancel' }]);
+      }
+        let location = await Location.getCurrentPositionAsync({});
+        let geocode = await Location.reverseGeocodeAsync(location.coords);
+        const myLocation = geocode[0].postalCode;
+        useMyLocationHandler(myLocation);
+    }
 
     return (
         <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); }}>
@@ -68,7 +78,7 @@ const HomeScreen = props => {
                     </View>
                     <Text style={styles.orText}>OR</Text>
                     <View>
-                        <Button color='#10518f' title="Use My Location" onPress={useMyLocationHandler}/>
+                        <Button color='#10518f' title="Use My Location" onPress={getLocation}/>
                     </View>
                 </View>
                 <View style={styles.selection}>
