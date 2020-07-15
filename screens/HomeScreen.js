@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, Component} from 'react';
 import { StyleSheet, View, Text, Button, TextInput, TouchableWithoutFeedback, Keyboard, TouchableOpacity, Alert } from 'react-native';
-
-const HomeScreen = props => {
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
+import { getAppLoadingLifecycleEmitter } from 'expo/build/launch/AppLoading';
+ 
+const HomeScreen = (props) => {
 
     const [donateColor, setDonateColor] = useState('');
     const [findColor, setFindColor] = useState('');
+    const [locationColor, setLocationColor] = useState ('');
     const [enteredValue, setEnteredValue] = useState('');
     const [selectedValue, setSelectedValue] = useState('');
     const [selectedOption, setSelectedOption] = useState('');
@@ -18,12 +22,29 @@ const HomeScreen = props => {
         setSelectedValue(myLocation);
     };
 
+    getLocation = async () =>  {
+        let { status } = await Location.requestPermissionsAsync(Permissions.LOCATION);
+        if (status !== 'granted') {
+            setLocationColor('#95d3e6');
+            Alert.alert('You have not allowed us to access your location!', 'Please enter your zipcode instead.', [{ text: 'Okay', style: 'cancel' }]);
+        } else {
+            permissionGranted();
+        }
+    }
+    permissionGranted = async () => {
+        let location = await Location.getCurrentPositionAsync({});
+        let geocode = await Location.reverseGeocodeAsync(location.coords);
+        const myLocation = geocode[0].postalCode;
+        setLocationColor('#95d3e6');
+        useMyLocationHandler(myLocation);
+    }
+    
     const donateHandler = () => {
         setSelectedOption('donate');
         setDonateColor('#95d3e6');
         setFindColor('#10518f');
     };
-
+    
     const findHandler = () => {
         setSelectedOption('find');
         setDonateColor('#10518f');
@@ -46,17 +67,6 @@ const HomeScreen = props => {
         setSelectedValue(enteredValue);
         props.onStart(selectedValue, selectedOption);
     };
-    
-   getLocation = async () =>  {
-      let { status } = await Location.requestPermissionsAsync();
-      if (status !== 'granted') {
-          Alert.alert('We need your location to show you the nearest food banks!', 'Enter your zipcode instead.', [{ text: 'Okay', style: 'cancel' }]);
-      }
-        let location = await Location.getCurrentPositionAsync({});
-        let geocode = await Location.reverseGeocodeAsync(location.coords);
-        const myLocation = geocode[0].postalCode;
-        useMyLocationHandler(myLocation);
-    }
 
     return (
         <TouchableWithoutFeedback onPress={() => { Keyboard.dismiss(); }}>
@@ -77,8 +87,12 @@ const HomeScreen = props => {
                         />
                     </View>
                     <Text style={styles.orText}>OR</Text>
-                    <View>
-                        <Button color='#10518f' title="Use My Location" onPress={getLocation}/>
+                    <View style={styles.buttons}>
+                        <Button
+                        color={locationColor} 
+                        title="Use My Location" 
+                        onPress={getLocation}
+                        />
                     </View>
                 </View>
                 <View style={styles.selection}>
