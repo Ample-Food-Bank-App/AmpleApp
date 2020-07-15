@@ -8,7 +8,6 @@ const HomeScreen = (props) => {
 
     const [donateColor, setDonateColor] = useState('');
     const [findColor, setFindColor] = useState('');
-    const [locationColor, setLocationColor] = useState ('');
     const [enteredValue, setEnteredValue] = useState('');
     const [selectedValue, setSelectedValue] = useState('');
     const [selectedOption, setSelectedOption] = useState('');
@@ -25,7 +24,6 @@ const HomeScreen = (props) => {
     getLocation = async () =>  {
         let { status } = await Location.requestPermissionsAsync(Permissions.LOCATION);
         if (status !== 'granted') {
-            setLocationColor('#95d3e6');
             Alert.alert('You have not allowed us to access your location!', 'Please enter your zipcode instead.', [{ text: 'Okay', style: 'cancel' }]);
         } else {
             permissionGranted();
@@ -35,7 +33,6 @@ const HomeScreen = (props) => {
         let location = await Location.getCurrentPositionAsync({});
         let geocode = await Location.reverseGeocodeAsync(location.coords);
         const myLocation = geocode[0].postalCode;
-        setLocationColor('#95d3e6');
         useMyLocationHandler(myLocation);
     }
     
