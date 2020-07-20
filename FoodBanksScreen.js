@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity, FlatList } from 'react-native
 import firebase from '../database/firebaseDb';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
+import getDistance from 'geolib/es/getDistance';
 import { getAppLoadingLifecycleEmitter } from 'expo/build/launch/AppLoading';
 
 const FoodBanksScreen = props => {
@@ -24,24 +25,29 @@ const FoodBanksScreen = props => {
 
     const calculateDistance = () => {
 
-        console.log('userlat: ' + props.userLat);
-        console.log('userlong: ' + props.userLong);
-        console.log('dis lat' + lat);
-        console.log('dis long' + long);
+//         console.log('userlat: ' + props.userLat);
+//         console.log('userlong: ' + props.userLong);
+//         console.log('dis lat' + lat);
+//         console.log('dis long' + long);
 
-        let lat1 = parseInt(props.userLat) * Math.PI / 180;
-        let lat2 = parseInt(lat) * Math.PI / 180;
-        let long1 = parseInt(props.userLong) * Math.PI / 180;
-        let long2 = parseInt(long) * Math.PI / 180;
+//         let lat1 = parseInt(props.userLat) * Math.PI / 180;
+//         let lat2 = parseInt(lat) * Math.PI / 180;
+//         let long1 = parseInt(props.userLong) * Math.PI / 180;
+//         let long2 = parseInt(long) * Math.PI / 180;
 
-        let latDif = lat2 - lat1;
-        let longDif = long2 - long1;
-        let meanLat = Math.cos((lat1 + lat2) / 2);
-        let sqLong = meanLat * longDif;
-        let earthRadius = 3958.761;
+//         let latDif = lat2 - lat1;
+//         let longDif = long2 - long1;
+//         let meanLat = Math.cos((lat1 + lat2) / 2);
+//         let sqLong = meanLat * longDif;
+//         let earthRadius = 3958.761;
 
-        let result = earthRadius * Math.sqrt(Math.pow(latDif, 2) + Math.pow(sqLong, 2));
-
+//         let result = earthRadius * Math.sqrt(Math.pow(latDif, 2) + Math.pow(sqLong, 2));
+        
+            let result = getDistance(
+              {latitude: parseInt(lat), longitude: parseInt(long)}, 
+              {latitude: parseInt(props.userLat), parseInt(longitude: props.userLong)}
+              ) * (0.00062137) ;
+           }
         console.log(result);
 
         setDistance(result);
