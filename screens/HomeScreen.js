@@ -1,27 +1,39 @@
-import React, { useState, Component} from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, Text, Button, TextInput, TouchableWithoutFeedback, Keyboard, TouchableOpacity, Alert } from 'react-native';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import { getAppLoadingLifecycleEmitter } from 'expo/build/launch/AppLoading';
- 
-const HomeScreen = (props) => {
 
-    const [donateColor, setDonateColor] = useState('');
-    const [findColor, setFindColor] = useState('');
+const HomeScreen = props => {
+
+    const [donateColor, setDonateColor] = useState('#10518f');
+    const [findColor, setFindColor] = useState('#10518f');
     const [enteredValue, setEnteredValue] = useState('');
     const [selectedValue, setSelectedValue] = useState('');
     const [selectedOption, setSelectedOption] = useState('');
+    const [isSet, setIsSet] = useState(false);
+    const [lat, setLat] = useState('');
+    const [long, setLong] = useState('');
 
     const numberInputHandler = inputText => {
         setEnteredValue(inputText);
     };
 
-    const useMyLocationHandler = (myLocation) => {
+    const useMyLocationHandler = myLocation => {
         setEnteredValue(myLocation);
         setSelectedValue(myLocation);
     };
 
-    getLocation = async () =>  {
+    getLatLong = async () => {
+        if (!isSet) {
+            let latlong = await Location.geocodeAsync(enteredValue);
+            setLat(latlong[0].latitude);
+            setLong(latlong[0].longitude);
+            setIsSet(true);
+        }
+    }
+
+    getLocation = async () => {
         let { status } = await Location.requestPermissionsAsync(Permissions.LOCATION);
         if (status !== 'granted') {
             Alert.alert('You have not allowed us to access your location!', 'Please enter your zipcode instead.', [{ text: 'Okay', style: 'cancel' }]);
@@ -29,19 +41,25 @@ const HomeScreen = (props) => {
             permissionGranted();
         }
     }
+
     permissionGranted = async () => {
         let location = await Location.getCurrentPositionAsync({});
         let geocode = await Location.reverseGeocodeAsync(location.coords);
         const myLocation = geocode[0].postalCode;
         useMyLocationHandler(myLocation);
+        if (!isSet) {
+            setLat(location["coords"]["latitude"]);
+            setLong(location["coords"]["longitude"]);
+            setIsSet(true);
+        }
     }
-    
+
     const donateHandler = () => {
         setSelectedOption('donate');
         setDonateColor('#95d3e6');
         setFindColor('#10518f');
     };
-    
+
     const findHandler = () => {
         setSelectedOption('find');
         setDonateColor('#10518f');
@@ -60,9 +78,12 @@ const HomeScreen = (props) => {
         else if (isNaN(parseInt(enteredValue)) || enteredValue.length != 5) {
             Alert.alert('Invalid Zip Code!', 'A valid zip code must be entered.', [{ text: 'Okay', style: 'destructive', onPress: () => setEnteredValue('') }]);
             return;
-        }
+        }  
+        getLatLong();
         setSelectedValue(enteredValue);
         props.onStart(selectedValue, selectedOption);
+        props.onGoToHome(false);
+        props.onLatLong(lat, long);
     };
 
     return (
@@ -80,16 +101,12 @@ const HomeScreen = (props) => {
                             keyboardType="numeric"
                             maxLength={5}
                             onChangeText={numberInputHandler}
-                            value={enteredValue} 
+                            value={enteredValue}
                         />
                     </View>
                     <Text style={styles.orText}>OR</Text>
-                    <View style={styles.buttons}>
-                        <Button
-                        color={locationColor} 
-                        title="Use My Location" 
-                        onPress={getLocation}
-                        />
+                    <View>
+                        <Button color='#10518f' title="Use My Location" onPress={getLocation} />
                     </View>
                 </View>
                 <View style={styles.selection}>
