@@ -4,60 +4,33 @@ import firebase from '../database/firebaseDb';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 import { getAppLoadingLifecycleEmitter } from 'expo/build/launch/AppLoading';
+import haversine from 'haversine';
 
 const FoodBanksScreen = props => {
 
+    const haversine = require('haversine');
     const ref = firebase.firestore().collection('ListOfFoodBanks');
     const [loading, setLoading] = useState(true);
     const [foodBanks, setFoodBanks] = useState([]);
     const [lat, setLat] = useState('');
     const [long, setLong] = useState('');
-    const [distance, setDistance] = useState(0);
-
-    getLatLong = async zip => {
-        let latlong = await Location.geocodeAsync(zip);
-        setLat(latlong[0].latitude);
-        setLong(latlong[0].longitude);
-        console.log('async lat: ' + latlong[0].latitude);
-        console.log('async long: ' + latlong[0].longitude);
-    }
-
-    const calculateDistance = () => {
-
-        console.log('userlat: ' + props.userLat);
-        console.log('userlong: ' + props.userLong);
-        console.log('dis lat' + lat);
-        console.log('dis long' + long);
-
-        let lat1 = parseInt(props.userLat) * Math.PI / 180;
-        let lat2 = parseInt(lat) * Math.PI / 180;
-        let long1 = parseInt(props.userLong) * Math.PI / 180;
-        let long2 = parseInt(long) * Math.PI / 180;
-
-        let latDif = lat2 - lat1;
-        let longDif = long2 - long1;
-        let meanLat = Math.cos((lat1 + lat2) / 2);
-        let sqLong = meanLat * longDif;
-        let earthRadius = 3958.761;
-
-        let result = earthRadius * Math.sqrt(Math.pow(latDif, 2) + Math.pow(sqLong, 2));
-
-        console.log(result);
-
-        setDistance(result);
-    };
 
     useEffect(() => {
         ref.onSnapshot(querySnapshot => {
             const list = [];
             querySnapshot.forEach(doc => {
-                const { name, zipcode } = doc.data();
-                getLatLong(zipcode);
-                calculateDistance();
-                if (distance <= 70) {
+                
+                // get food bank's zip code
+                const { zipcode } = doc.data();
+
+                // get lat & long of zip code and calculate distance between food bank and user location
+                let dist = calculateDistance(zipcode);
+
+                // if food bank is within 50 miles, add food bank to list
+                if (dist <= 50) {
                     list.push({
                         id: doc.id,
-                        distance: distance
+                        distance: dist
                     });
                 }
             });
@@ -69,6 +42,28 @@ const FoodBanksScreen = props => {
             }
         });
     }, []);
+
+    const calculateDistance = async zip => {
+        let latlong = await Location.geocodeAsync(zip);
+
+        // user lat & long
+        const start = {
+            latitude: JSON.stringify(props.userLat),
+            longitude: JSON.stringify(props.userLong)
+        };
+
+        // food bank lat & long
+        const end = {
+            latitude: latlong[0].latitude,
+            longitude: latlong[0].longitude
+        };
+
+        // haversine calculates distance between both lat & long points
+        let dist = haversine(start, end, { unit: 'mile' });
+
+        // return rounded distance
+        return dist.toFixed(1);
+    }
 
     return (
         <View style={styles.screen}>
