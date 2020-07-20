@@ -44,8 +44,8 @@ const FoodBanksScreen = props => {
 //         let result = earthRadius * Math.sqrt(Math.pow(latDif, 2) + Math.pow(sqLong, 2));
         
             let result = getDistance(
-              {latitude: parseInt(lat), longitude: parseInt(long)}, 
-              {latitude: parseInt(props.userLat), parseInt(longitude: props.userLong)}
+              {latitude: lat, longitude: long}, 
+              {latitude: JSON.stringify(props.userLat), longitude: JSON.stringify(props.userLong)}
               ) * (0.00062137) ;
            }
         console.log(result);
