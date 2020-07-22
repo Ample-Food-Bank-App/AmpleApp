@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     icon: {
         width: 25,
         height: 25,
-        tintColor: '#3d3045',
+        tintColor: '#10518f',
         alignItems: "center"
     },
     category: {

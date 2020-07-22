@@ -10,7 +10,7 @@ const FindResourcesScreen = props => {
 
     const [inventory, setInventory] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [address, setAddress1] = useState('');
+    const [address, setAddress] = useState('');
     const [phone, setPhone] = useState('');
 
     const ref = firebase.firestore().collection(props.name);
@@ -75,7 +75,7 @@ const FindResourcesScreen = props => {
             <View style={styles.screen}>
                 <View style={styles.topBar}>
                     <TouchableOpacity style={styles.backButton} onPress={() => props.onGoToList(true)}>
-                        <Text style={{ color: 'white' }}>BACK</Text>
+                        <Image style={styles.back} source={require('../images/back.png')}></Image>
                     </TouchableOpacity>
                     <View style={{ justifyContent: 'center', alignItems: 'center' }}>
                         <Text style={styles.title}>{props.name}</Text>
@@ -84,20 +84,19 @@ const FindResourcesScreen = props => {
                 <View style={styles.need}>
                     <Text style={styles.textItem}>Items Stocked: </Text>
                 </View>
-                <View style={{ backgroundColor: '#fb8f67' }}>
+                <View style={{ backgroundColor: '#ff8000' }}>
                     {renderData()}
                 </View>
                 <View style={styles.line}>
-                    <View style={{ backgroundColor: '#fb8f67' }}>
+                    <View style={{ backgroundColor: '#ff8000' }}>
                         <Text style={styles.textSubheader}>Address and Contact Details</Text>
                     </View>
-                    <TouchableHighlight onPress={openMap} underlayColor='#b8f3fa'>
+                    <TouchableHighlight onPress={openMap} underlayColor='#e5e5ea'>
                         <View style={{ flexDirection: 'row' }}>
                             <Image style={styles.address} source={require('../images/address.png')}></Image>
-                            <Text style={styles.textAddress}>{address}</Text>
                         </View>
                     </TouchableHighlight>
-                    <TouchableHighlight onPress={makeCall} underlayColor='#b8f3fa'>
+                    <TouchableHighlight onPress={makeCall} underlayColor='#e5e5ea'>
                         <View style={{ flexDirection: 'row', marginTop: 50 }}>
                             <Image style={styles.phone} source={require('../images/phone.png')}></Image>
                             <Text style={styles.textPhone}>{phone}</Text>
@@ -139,21 +138,25 @@ const styles = StyleSheet.create({
         height: 110
     },
     backButton: {
-        borderColor: '#10518f',
-        borderWidth: 2,
         justifyContent: 'center',
         alignItems: 'center',
-        marginLeft: 5,
-        backgroundColor: '#10518f',
+        marginLeft: 15,
         width: 50,
         borderRadius: 5,
         marginRight: 5,
         marginTop: 40
     },
+    back: {
+        width: 25, 
+        height: 25,
+        tintColor: 'white',
+        paddingTop: 5
+    },
     title: {
         color: 'white',
         fontSize: 20,
-        marginTop: 8
+        marginTop: 12,
+        fontWeight: 'bold'
     },
     header: {
         alignItems: 'center',
@@ -170,7 +173,7 @@ const styles = StyleSheet.create({
     },
     need: {
         paddingLeft: 30,
-        backgroundColor: '#fb8f67'
+        backgroundColor: '#ff8000'
     },
     line: {
         borderBottomWidth: 0.5,
@@ -179,13 +182,13 @@ const styles = StyleSheet.create({
     address: {
         width: 55,
         height: 55,
-        tintColor: '#3d3045',
+        tintColor: '#10518f',
         marginVertical: 10
     },
     phone: {
         width: 25,
         height: 25,
-        tintColor: '#3d3045',
+        tintColor: '#10518f',
         marginLeft: 17,
         marginVertical: -50
     },

@@ -1,36 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, FlatList, Image } from 'react-native';
 import firebase from '../database/firebaseDb';
 import * as Location from 'expo-location';
+import getDistance from 'geolib/es/getDistance';
 import * as Permissions from 'expo-permissions';
 import { getAppLoadingLifecycleEmitter } from 'expo/build/launch/AppLoading';
-import haversine from 'haversine';
+
 
 const FoodBanksScreen = props => {
 
-    const haversine = require('haversine');
     const ref = firebase.firestore().collection('ListOfFoodBanks');
     const [loading, setLoading] = useState(true);
     const [foodBanks, setFoodBanks] = useState([]);
     const [lat, setLat] = useState('');
     const [long, setLong] = useState('');
+    const [distance, setDistance] = useState(0);
+
+    getLatLong = async zip => {
+        let latlong = await Location.geocodeAsync(zip);
+        setLat(latlong[0].latitude);
+        setLong(latlong[0].longitude);
+        console.log('async lat: ' + latlong[0].latitude);
+        console.log('async long: ' + latlong[0].longitude);
+    }
+
+    const calculateDistance = () => {
+        let result = getDistance(
+            {latitude: lat, longitude: long}, 
+            {latitude: props.userLat, longitude: props.userLong}
+            ) * (0.00062137);
+        console.log(result);
+
+        setDistance(result);
+    };
 
     useEffect(() => {
         ref.onSnapshot(querySnapshot => {
             const list = [];
             querySnapshot.forEach(doc => {
-                
-                // get food bank's zip code
-                const { zipcode } = doc.data();
-
-                // get lat & long of zip code and calculate distance between food bank and user location
-                let dist = calculateDistance(zipcode);
-
-                // if food bank is within 50 miles, add food bank to list
-                if (dist <= 50) {
+                const { name, zipcode } = doc.data();
+                getLatLong(zipcode);
+                calculateDistance();
+                if (distance <= 70) {
                     list.push({
                         id: doc.id,
-                        distance: dist
+                        distance: distance
                     });
                 }
             });
@@ -43,52 +57,33 @@ const FoodBanksScreen = props => {
         });
     }, []);
 
-    const calculateDistance = async zip => {
-        let latlong = await Location.geocodeAsync(zip);
-
-        // user lat & long
-        const start = {
-            latitude: JSON.stringify(props.userLat),
-            longitude: JSON.stringify(props.userLong)
-        };
-
-        // food bank lat & long
-        const end = {
-            latitude: latlong[0].latitude,
-            longitude: latlong[0].longitude
-        };
-
-        // haversine calculates distance between both lat & long points
-        let dist = haversine(start, end, { unit: 'mile' });
-
-        // return rounded distance
-        return dist.toFixed(1);
-    }
-
     return (
         <View style={styles.screen}>
             <View style={styles.topBar}>
                 <TouchableOpacity style={styles.backButton} onPress={() => props.onGoToHome(true)}>
-                    <Text style={{ color: 'white' }}>BACK</Text>
+                    <Image style={styles.back} source={require('../images/back.png')}></Image>
                 </TouchableOpacity>
-                <View style={{ justifyContent: 'center', alignItems: 'center' }}>
-                    <Text style={styles.title}>Food Banks Near: {props.locationOfUser}</Text>
+                <View style={{ justifyContent: 'center', alignItems: 'center', paddingBottom: 20}}>
+                    <Text style={styles.title}>Nearby Food Banks</Text>
+                </View>
+                <View style={styles.zip}>
+                    <Text style={styles.textZip}>Zipcode: {props.locationOfUser}</Text>
                 </View>
             </View>
             <View style={styles.list}>
                 <FlatList
-                    keyExtractor={(item, index) => item.id}
+                    keyExtractor={(item) => item.id}
                     data={foodBanks}
                     renderItem={itemData =>
                         <View style={styles.listItem}>
-                            <Text style={styles.name}>{itemData.item.id}</Text>
-                            <Text>{itemData.item.distance} miles away</Text>
+                            <Text style={styles.textName}>{itemData.item.id}</Text>
+                            <Text style={styles.textData}>{itemData.item.distance} miles away</Text>
                             <TouchableOpacity style={styles.customButton} onPress={() => {
                                 props.onGoToInv(true);
                                 props.onGoToList(false);
                                 props.onName(itemData.item.id);
                             }}>
-                                <Text style={styles.buttonText}>VIEW INVENTORY</Text>
+                                <Text style={styles.buttonText}>See more</Text>
                             </TouchableOpacity>
                         </View>
                     }
@@ -100,20 +95,19 @@ const FoodBanksScreen = props => {
 
 const styles = StyleSheet.create({
     screen: {
-        flex: 1
+        flex: 1,
+        backgroundColor: '#E5E5EA',
     },
     topBar: {
         maxWidth: '100%',
         backgroundColor: '#10518f',
-        height: 110
+        height: 110,
+        paddingBottom: 12
     },
     backButton: {
-        borderColor: '#10518f',
-        borderWidth: 2,
         justifyContent: 'center',
         alignItems: 'center',
-        marginLeft: 5,
-        backgroundColor: '#10518f',
+        marginLeft: 15,
         width: 50,
         borderRadius: 5,
         marginRight: 5,
@@ -121,42 +115,74 @@ const styles = StyleSheet.create({
     },
     title: {
         color: 'white',
-        fontSize: 20,
-        marginTop: 8
+        fontSize: 25,
+        fontWeight: 'bold',
     },
     list: {
-        marginTop: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingBottom: 150
+        marginTop: 60,
+        paddingBottom: 180
     },
     listItem: {
-        padding: 10,
-        backgroundColor: '#65c1f0',
-        borderColor: 'black',
-        borderWidth: 1,
-        maxWidth: '100%',
-        width: 355,
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: 150
+        backgroundColor: 'white',
+        borderRadius: 15, 
+        borderWidth: 1, 
+        borderColor: 'white', 
+        marginBottom: 30, 
+        marginRight: 25,
+        marginLeft: 25, 
+        paddingTop:5, 
+        paddingBottom:20, 
+        paddingLeft: 15,
     },
-    name: {
-        fontSize: 0.05 * 355,
-        color: 'white'
+    textName: {
+        fontSize: 20,
+        color: 'black',
+        fontWeight: 'bold',
+        borderRadius: 10,
+        paddingTop: 10,
+        paddingBottom: 10,
+    },
+    textData: {
+        fontSize: 16,
+        color: '#10518f',
+        paddingBottom: 15,
     },
     customButton: {
-        backgroundColor: '#10518f',
-        width: 140,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 20,
-        paddingVertical: 10
+        width: 88,
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        marginBottom: 1,
+        borderRadius: 12, 
+        borderWidth: 1, 
+        borderColor: '#ff8000', 
+        backgroundColor: '#ff8000', 
     },
     buttonText: {
         color: 'white',
-        fontSize: 13
-    }
+        fontSize: 15,
+        alignItems: 'center'
+    }, 
+    textZip: {
+        fontSize: 16,
+        color: 'white',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    back: {
+        width: 25, 
+        height: 25,
+        tintColor: 'white',
+    },
+    zip: {
+        backgroundColor: '#ff8000',  
+        alignItems: 'flex-end', 
+        paddingRight: 10, 
+        paddingTop: 10,
+        paddingBottom: 10,
+        marginLeft:250,
+        marginRight: 25,
+        marginBottom: 10,
+      },
 });
 
 export default FoodBanksScreen;
